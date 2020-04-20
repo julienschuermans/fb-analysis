@@ -167,8 +167,8 @@ app.layout = html.Div(children=[
             html.Label('Select one or more contacts'),
             dcc.Dropdown(id='contact-select-dropdown',
                          options=[
-                             {'label': contact, 'value': contact} for contact in df.sender_name.unique().tolist()],
-                         value=get_all_contacts()[:5],
+                             {'label': contact, 'value': contact} for contact in sorted(df.sender_name.unique().tolist())],
+                         value=sorted(df.sender_name.unique().tolist())[:5],
                          multi=True
                          ),
 
