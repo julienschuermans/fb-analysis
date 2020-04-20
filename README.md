@@ -1,5 +1,5 @@
 # fb-analysis
-Dashboard to explore your personal Facebook data dump.
+Interactive dashboard to explore your personal Facebook Messenger data dump.
 
 ## Setup
 
@@ -16,3 +16,5 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
+
+The Plotly Dash webserver will load at [http://127.0.0.1:8050](http://127.0.0.1:8050).
