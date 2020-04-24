@@ -12,11 +12,10 @@ import numpy as np
 
 import logging
 logging.basicConfig(level=logging.INFO)
-
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
 df = build_dataframe()
+assert MY_NAME in df.sender_name.unique().tolist(),\
+    f"Name \"{MY_NAME}\" is not a valid sender_name"
 contact_counts = count_msg_per_contact(df)
 total_sent = len(df.loc[df.sender_name == MY_NAME])
 total_received = len(df.loc[df.sender_name != MY_NAME])

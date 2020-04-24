@@ -80,7 +80,9 @@ def calc_activity_pattern(df):
     cat_type = CategoricalDtype(categories=hours, ordered=True)
     day_hours = selected['timestamp'].dt.hour.astype(cat_type)
 
-    return selected.groupby([weekdays, day_hours]).size().unstack(level=0)
+    result = selected.groupby([weekdays, day_hours]).size().unstack(level=0)
+
+    return result
 
 
 def count_msg_per_contact(df):
@@ -183,25 +185,17 @@ def get_contact_stats(df, selected_contacts):
 
 
 def connection_matrix(df):
-    names = df.sender_name.unique().tolist()
-    matrix = np.zeros(
-        (len(names), len(names)))
+    t0 = time.time()
     msgs_per_sender_per_title = df.groupby(['sender_name', 'title']).size(
     ).reset_index().rename(columns={0: 'msg_count'})
 
-    for _, row in msgs_per_sender_per_title.iterrows():
-        sender = row['sender_name']
-        if sender != MY_NAME:
+    receivers_per_title = df[['title', 'sender_name']].rename(
+        columns={'sender_name': 'receiver_name'})
 
-            participants = df.loc[df.title ==
-                                  row.title]['sender_name'].unique().tolist()
-            for receiver in participants:
-                if receiver != sender and receiver != MY_NAME:
-                    matrix[names.index(sender)][names.index(
-                        receiver)] += row['msg_count']
+    combined = msgs_per_sender_per_title.merge(receivers_per_title, on='title')
+    combined = combined[combined['sender_name'] !=
+                        combined['receiver_name']].drop_duplicates().drop(columns='title')
 
-    dataset = pd.DataFrame({name: matrix[:, i]
-                            for i, name in enumerate(names)})
-    dataset = dataset.replace(0.0, np.nan)
-
-    return dataset.columns.tolist(), dataset.values
+    connections = combined.groupby(['sender_name', 'receiver_name'])[
+        'msg_count'].sum().unstack()
+    return connections.columns.tolist(), connections.values
