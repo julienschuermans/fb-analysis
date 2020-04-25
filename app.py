@@ -12,6 +12,7 @@ import dash
 from layout import *
 from helpers import *
 from messages import *
+from network import *
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -39,6 +40,8 @@ first_message_date = df.timestamp.min().strftime('%d-%m-%Y')
 last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
 weekly_pattern = calc_activity_pattern(df)
 names, connectivity = connection_matrix(df)
+names_, connectivity_ = connection_matrix(df.loc[df.sender_name != MY_NAME])
+G = build_graph(connectivity_, names_)
 logging.info(f'Preprocessing took {time.time()-t0:.2f} seconds')
 
 # create the app
@@ -79,7 +82,7 @@ def show_content(value):
     elif value == "3":
         return html.Div(get_tab3(all_contacts))
     elif value == "4":
-        return html.Div(get_tab4(names, connectivity))
+        return html.Div(plot_graph(G))
 
 
 # helper functionality
