@@ -1,54 +1,88 @@
-from messages import *
-from helpers import *
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output
+import logging
+import numpy as np
+import pandas as pd
 
 import plotly.express as px
+from dash.dash import no_update
+from dash.dependencies import Input, Output
+import dash_html_components as html
+import dash_core_components as dcc
+import dash
 
-import pandas as pd
-import numpy as np
+from layout import *
+from helpers import *
+from messages import *
 
-import logging
+
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
+app.config.suppress_callback_exceptions = True
+
 logging.basicConfig(level=logging.INFO)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+
+# general dataload
 df = build_dataframe()
 assert MY_NAME in df.sender_name.unique().tolist(),\
     f"Name \"{MY_NAME}\" is not a valid sender_name"
+
+# preprocessing
+t0 = time.time()
+all_contacts = sorted(df.sender_name.unique().tolist())
 contact_counts = count_msg_per_contact(df)
 total_sent = len(df.loc[df.sender_name == MY_NAME])
 total_received = len(df.loc[df.sender_name != MY_NAME])
 first_message_date = df.timestamp.min().strftime('%d-%m-%Y')
 last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
+weekly_pattern = calc_activity_pattern(df)
+names, connectivity = connection_matrix(df)
+logging.info(f'Preprocessing took {time.time()-t0:.2f} seconds')
 
-pattern = calc_activity_pattern(df)
-
-n, m = connection_matrix(df)
-
-connection_heatmap_fig = px.imshow(m,
-                                   labels=dict(
-                                       y="Sender", x="Receiver", color="#Messages sent/received"),
-                                   y=n,
-                                   x=n,
-                                   )
-connection_heatmap_fig.update_layout(
-    autosize=True,
-    width=1000,
-    height=700,
-    margin=dict(
-        l=50,
-        r=50,
-        b=100,
-        t=100,
-        pad=4
-    )
-)
-
-
+# create the app
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.config.suppress_callback_exceptions = True
+
+app.layout = html.Div(children=[
+    html.H1(children='Facebook Messenger analysis'),
+
+    html.Div(children=f'''
+        Exploring {total_sent} messages sent and {total_received} received between {first_message_date} and {last_message_date}
+    '''),
+
+    dcc.Tabs(children=[
+        dcc.Tab(label='Global analysis', value="1"),
+        dcc.Tab(label='Chat analysis', value="2"),
+        dcc.Tab(label='Contact analysis', value="3"),
+        dcc.Tab(label='Network analysis', value="4"),
+    ],
+        value="1",
+        id='tabs'
+    ),
+    html.Div(id='tab-output')
+])
+
+# tab callbacks
 
 
+@app.callback(
+    Output('tab-output', 'children'),
+    [Input('tabs', 'value')])
+def show_content(value):
+
+    if value == "1":
+        return html.Div(get_tab1(weekly_pattern, contact_counts))
+    elif value == "2":
+        return html.Div(get_tab2(df))
+    elif value == "3":
+        return html.Div(get_tab3(all_contacts))
+    elif value == "4":
+        return html.Div(get_tab4(names, connectivity))
+
+
+# helper functionality
 def generate_table_children(dataframe, max_rows=10):
     return [
         html.Thead(
@@ -61,122 +95,7 @@ def generate_table_children(dataframe, max_rows=10):
         ])
     ]
 
-
-app.layout = html.Div(children=[
-    html.H1(children='Facebook Messenger analysis'),
-
-    html.Div(children=f'''
-        Exploring {total_sent} messages sent and {total_received} received between {first_message_date} and {last_message_date}
-    '''),
-
-    dcc.Tabs(id='tabs-example', value='tab-1', children=[
-        dcc.Tab(label='Global analysis', children=[
-
-            html.H4('#Messages sent/received'),
-            html.Label('Select a timeframe'),
-            dcc.Dropdown(style={'width': '49%', 'display': 'inline-block'},
-                         id='global-timeframe-dropdown',
-                         options=[
-                {'label': item, 'value': item} for item in ['Hourly', 'Daily', 'Monthly', 'Yearly']
-            ],
-                value='Monthly'
-            ),
-            dcc.Graph(id='sent-received-bar-graph'),
-
-            html.H4('Weekly activity'),
-            dcc.Graph(
-                id='weekly-activity-heatmap',
-                figure=px.imshow(pattern.T,
-                                 labels=dict(
-                                     y="Day of Week", x="Time of Day", color="#Messages sent"),
-                                 y=['Monday', 'Tuesday', 'Wednesday',
-                                     'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                                 x=[str(x)+'h' for x in range(24)]
-                                 )
-            ),
-
-            html.H4('Contact interactivity'),
-            dcc.Graph(
-                id='connection-heatmap',
-                figure=connection_heatmap_fig,
-            ),
-
-            html.H4('#Messages per contact'),
-            dcc.Graph(id='contact-count-bar-graph',
-                      figure={
-                          'data': [
-                              {
-                                  'x': contact_counts['theirs'][0],
-                                  'y': contact_counts['theirs'][1],
-                                  'type': 'bar',
-                              },
-                          ],
-                      }
-                      ),
-        ]),
-        dcc.Tab(label='Chat analysis', children=[
-
-            html.Div(children=[
-                html.Label('Select a chat', style={
-                           'width': '49%', 'display': 'inline-block'}),
-                html.Label('Select a timeframe', style={
-                           'width': '49%', 'display': 'inline-block'}),
-            ]),
-
-            html.Div(children=[
-
-                dcc.Dropdown(style={'width': '49%', 'display': 'inline-block'},
-                             id='chat-dropdown',
-                             options=[
-                    {'label': title, 'value': title} for title in list_chat_titles(df)
-                ],
-                    value=list_chat_titles(df)[0]
-                ),
-
-                dcc.Dropdown(style={'width': '49%', 'display': 'inline-block'},
-                             id='timeframe-dropdown',
-                             options=[
-                    {'label': item, 'value': item} for item in ['Hourly', 'Daily', 'Monthly', 'Yearly']
-                ],
-                    value='Monthly'
-                ),
-            ]),
-
-            dcc.Graph(id='msg-count-lines'),
-
-            html.Div(children=[
-                dcc.Graph(style={'width': '49%', 'display': 'inline-block'},
-                          id='hourly-bars'),
-
-                dcc.Graph(style={'width': '49%', 'display': 'inline-block'},
-                          id='weekly-bars'),
-            ]),
-
-
-            html.H4('#Messages per participant'),
-            dcc.Graph(id='participants-pie-chart'),
-
-            html.H4('Top words per participant'),
-            html.Table(id='top-words-table'),
-
-        ]),
-        dcc.Tab(label='Contact analysis', children=[
-
-            html.H4('Stats per contact'),
-            html.Label('Select one or more contacts'),
-            dcc.Dropdown(id='contact-select-dropdown',
-                         options=[
-                             {'label': contact, 'value': contact} for contact in sorted(df.sender_name.unique().tolist())],
-                         value=sorted(df.sender_name.unique().tolist())[:5],
-                         multi=True
-                         ),
-
-            html.Table(id='contacts-table'),
-        ]),
-
-    ]),
-
-])
+# callbacks for content TAB 1
 
 
 @app.callback(
@@ -190,6 +109,8 @@ def update_global_sent_received(selected_timeframe):
                  color='type', barmode='group', labels={'msg_count': '#messages', 'timestamp': 'Time'})
 
     return fig
+
+# callbacks for content TAB 2
 
 
 @app.callback(
@@ -265,6 +186,8 @@ def update_figures(selected_chat_title):
                      y="msg_count", color='sender_name')
 
     return (figure1, figure2)
+
+# callbacks for content TAB 3
 
 
 @app.callback(

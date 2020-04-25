@@ -60,7 +60,7 @@ def build_dataframe():
     df = pd.DataFrame(all_data)
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
 
-    logging.info(f'Loaded all data in {time.time()-t0} seconds.')
+    logging.info(f'Loaded all data in {time.time()-t0:.4f} seconds.')
     return df
 
 

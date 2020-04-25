@@ -185,7 +185,7 @@ def get_contact_stats(df, selected_contacts):
 
 
 def connection_matrix(df):
-    t0 = time.time()
+
     msgs_per_sender_per_title = df.groupby(['sender_name', 'title']).size(
     ).reset_index().rename(columns={0: 'msg_count'})
 
@@ -196,6 +196,7 @@ def connection_matrix(df):
     combined = combined[combined['sender_name'] !=
                         combined['receiver_name']].drop_duplicates().drop(columns='title')
 
-    connections = combined.groupby(['sender_name', 'receiver_name'])[
+    connectivity = combined.groupby(['sender_name', 'receiver_name'])[
         'msg_count'].sum().unstack()
-    return connections.columns.tolist(), connections.values
+
+    return connectivity.columns.tolist(), connectivity.values

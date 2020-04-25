@@ -2,7 +2,7 @@ import os
 
 DATA_DIR = 'data'
 MSG_DIR = os.path.join(DATA_DIR, 'messages/inbox')
-MY_NAME = 'Firstname Lastname'
+MY_NAME = 'Julien Schuermans'
 
 BORING_WORDS = {
     'jij', 'wel', 'nee', 'ok', 'heel', 'ga', 'oke', 'gaat', 'gaan',
