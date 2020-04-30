@@ -16,13 +16,10 @@ from network import *
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+logging.basicConfig(level=logging.INFO)
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
 app.config.suppress_callback_exceptions = True
-
-logging.basicConfig(level=logging.INFO)
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 
 # general dataload
@@ -41,7 +38,7 @@ last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
 weekly_pattern = calc_activity_pattern(df)
 names, connectivity = connection_matrix(df)
 G = build_graph(connectivity, names)
-logging.info(f'Preprocessing took {time.time()-t0:.2f} seconds')
+logging.info(f'Preprocessing took {time.time()-t0:.4f} seconds.')
 
 # create the app
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)

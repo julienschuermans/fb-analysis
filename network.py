@@ -71,7 +71,7 @@ def plot_graph(G):
             reversescale=True,
             color=node_weigths,
             cmax=np.percentile(node_weigths, 95),
-            cmin=1,
+            cmin=10,
             size=10,
             colorbar=dict(
                 thickness=15,
