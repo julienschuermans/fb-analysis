@@ -40,8 +40,7 @@ first_message_date = df.timestamp.min().strftime('%d-%m-%Y')
 last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
 weekly_pattern = calc_activity_pattern(df)
 names, connectivity = connection_matrix(df)
-names_, connectivity_ = connection_matrix(df.loc[df.sender_name != MY_NAME])
-G = build_graph(connectivity_, names_)
+G = build_graph(connectivity, names)
 logging.info(f'Preprocessing took {time.time()-t0:.2f} seconds')
 
 # create the app
