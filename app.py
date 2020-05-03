@@ -255,7 +255,7 @@ def update_image(selected_chat_title, slider_value):
 
     photos = html.Img(src='data:image/jpg;base64,{}'.format(read_image(list_of_filenames[int(slider_value)]).decode()),
                       style={
-        'width': '500px',
+        'height': '600px',
         'margin-left': 'auto',
         'margin-right': 'auto',
         'margin-bottom': '20px',
