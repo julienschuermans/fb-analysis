@@ -47,7 +47,7 @@ def plot_graph(G):
 
     node_x = []
     node_y = []
-    node_weigths = []
+    node_weights = []
     node_text = []
 
     for node, adjacencies in enumerate(G.adjacency()):
@@ -57,7 +57,7 @@ def plot_graph(G):
 
         sum_of_edge_weights = int(sum([y['weight']
                                        for y in adjacencies[1].values() if not np.isnan(y['weight'])]))
-        node_weigths.append(sum_of_edge_weights)
+        node_weights.append(sum_of_edge_weights)
         node_text.append(f'{G.nodes[node].get("name")}\n \
                          #messages: {sum_of_edge_weights}')
 
@@ -69,8 +69,8 @@ def plot_graph(G):
             showscale=True,
             colorscale='YlGnBu',
             reversescale=True,
-            color=node_weigths,
-            cmax=np.percentile(node_weigths, 95),
+            color=node_weights,
+            cmax=np.percentile(node_weights, 95),
             cmin=10,
             size=10,
             colorbar=dict(
@@ -92,11 +92,4 @@ def plot_graph(G):
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
     )
 
-    graph = [
-        html.H4('Network Interactions'),
-        dcc.Graph(
-            id='network graph',
-            figure=fig,
-        ),
-    ]
-    return graph
+    return fig

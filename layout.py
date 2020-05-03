@@ -4,7 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 from helpers import *
-import time
+from network import plot_graph
 
 
 def get_tab1(weekly_pattern, contact_counts):
@@ -116,30 +116,52 @@ def get_tab3(contacts):
     return tab3
 
 
-def get_tab4(names, connectivity):
-    connection_heatmap_fig = px.imshow(connectivity,
-                                       labels=dict(
-                                           y="Sender", x="Receiver", color="#Messages"),
-                                       y=names,
-                                       x=names,
-                                       )
-    connection_heatmap_fig.update_layout(
-        autosize=True,
-        width=1280,
-        height=720,
-        margin=dict(
-            l=100,
-            r=100,
-            b=100,
-            t=100,
-            pad=4
-        )
-    )
+def get_tab4(G):
+    fig = plot_graph(G)
+
     tab4 = [
         html.H4('Network Interactions'),
         dcc.Graph(
-            id='connection-heatmap',
-            figure=connection_heatmap_fig,
+            id='network graph',
+            figure=fig,
         ),
     ]
     return tab4
+
+
+def get_tab5(df_photos):
+
+    photos_selection = filter_chat(df_photos,  list_chat_titles(df_photos)[0])
+
+    photos_selection = photos_selection.sort_values('timestamp')
+    list_of_filenames = photos_selection.photo_uri.tolist()
+
+    tab5 = [
+        html.Label('Select a chat'),
+        dcc.Dropdown(id='chat-dropdown-media',
+                     options=[
+                         {'label': title, 'value': title} for title in list_chat_titles(df_photos)
+                     ],
+                     value=list_chat_titles(df_photos)[0]
+                     ),
+
+        html.H4('Photos sent/received'),
+
+        html.Div(children=[
+            dcc.Slider(
+                id='my-slider',
+                min=0,
+                step=1
+            ),
+        ],
+            style={
+            'margin-bottom': '120px',
+            'margin-right': '30px',
+        }
+        ),
+
+        html.H4(id='img-details'),
+        html.Div(id='img-container'),
+    ]
+
+    return tab5

@@ -23,9 +23,9 @@ app.config.suppress_callback_exceptions = True
 
 
 # general dataload
-df = build_dataframe()
+df, df_photos = load_data()
 assert MY_NAME in df.sender_name.unique().tolist(),\
-    f"Name \"{MY_NAME}\" is not a valid sender_name"
+    f"Name \"{MY_NAME}\" (in config.py) is not a valid sender_name, is your name \"{df.sender_name.mode().values[0]}\"?"
 
 # preprocessing
 t0 = time.time()
@@ -52,10 +52,11 @@ app.layout = html.Div(children=[
     '''),
 
     dcc.Tabs(children=[
-        dcc.Tab(label='Global analysis', value="1"),
-        dcc.Tab(label='Chat analysis', value="2"),
-        dcc.Tab(label='Contact analysis', value="3"),
-        dcc.Tab(label='Network analysis', value="4"),
+        dcc.Tab(label='Personal Stats', value="1"),
+        dcc.Tab(label='Chat Analysis', value="2"),
+        dcc.Tab(label='Contact Info', value="3"),
+        dcc.Tab(label='Network Graph', value="4"),
+        dcc.Tab(label='Photo Viewer', value="5"),
     ],
         value="1",
         id='tabs'
@@ -78,7 +79,9 @@ def show_content(value):
     elif value == "3":
         return html.Div(get_tab3(all_contacts))
     elif value == "4":
-        return html.Div(plot_graph(G))
+        return html.Div(get_tab4(G))
+    elif value == "5":
+        return html.Div(get_tab5(df_photos))
 
 
 # helper functionality
@@ -195,6 +198,73 @@ def update_figures(selected_chat_title):
 )
 def update_contacts_table(selected_contacts):
     return generate_table_children(get_contact_stats(df, selected_contacts))
+
+# callbacks for content TAB 5
+
+
+@app.callback(
+    [Output('my-slider', 'value'),
+     Output('my-slider', 'max'),
+     Output('my-slider', 'marks')],
+    [Input('chat-dropdown-media', 'value')]
+)
+def update_slider_options(selected_chat_title):
+
+    photos_selection = filter_chat(df_photos, selected_chat_title)
+    photos_selection = photos_selection.sort_values('timestamp')
+    list_of_filenames = photos_selection.photo_uri.tolist()
+
+    photos_selection['date'] = photos_selection.timestamp.dt.date
+    daily_first = photos_selection.groupby('date').first(
+    ).reset_index()
+    combined = photos_selection.merge(
+        daily_first, on='photo_creation_timestamp', how='left')
+    idx_of_first_daily_msg = combined.loc[~combined.sender_name_y.isnull(
+    )].index.tolist()
+    date_of_first_daily_msg = combined.loc[~combined.sender_name_y.isnull(
+    )].date_y.tolist()
+
+    value = 0
+    max_value = len(list_of_filenames)-1
+    marks = {value:
+             {'label': date,
+              'style':
+              {"transform": "rotate(90deg)", 'margin-left': '-35px', 'margin-bottom': '20px', 'margin-top': '50px'}}
+
+             for value, date in zip(idx_of_first_daily_msg, date_of_first_daily_msg)
+             }
+
+    return value, max_value, marks
+
+
+@app.callback(
+    [Output('img-container', 'children'),
+     Output('img-details', 'children')],
+    [Input('chat-dropdown-media', 'value'),
+     Input('my-slider', 'value')]
+
+
+)
+def update_image(selected_chat_title, slider_value):
+
+    photos_selection = filter_chat(df_photos, selected_chat_title)
+    photos_selection = photos_selection.sort_values('timestamp')
+    list_of_filenames = photos_selection.photo_uri.tolist()
+
+    photos = html.Img(src='data:image/jpg;base64,{}'.format(read_image(list_of_filenames[int(slider_value)]).decode()),
+                      style={
+        'height': '40%',
+        'width': '40%',
+        'float': 'left',
+        'margin-bottom': '20px'
+    }
+    )
+
+    text = str(slider_value + 1) + '/' + str(len(list_of_filenames)) + '\n' + photos_selection.iloc[slider_value].sender_name + '  [' + \
+        photos_selection.timestamp.dt.strftime(
+            '%d-%m-%Y %H:%M').iloc[slider_value] + ']'
+
+    return photos, text
 
 
 if __name__ == '__main__':
