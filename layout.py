@@ -156,7 +156,7 @@ def get_tab5(df_photos):
         ],
             style={
             'margin-bottom': '120px',
-            'margin-right': '30px',
+            'margin-right': '100px',
         }
         ),
 

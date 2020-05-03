@@ -214,7 +214,9 @@ def update_slider_options(selected_chat_title):
     photos_selection = photos_selection.sort_values('timestamp')
     list_of_filenames = photos_selection.photo_uri.tolist()
 
-    photos_selection['date'] = photos_selection.timestamp.dt.date
+    photos_selection['date'] = pd.to_datetime(photos_selection.timestamp.dt.date).dt.strftime(
+        '%d/%m/%Y')
+
     daily_first = photos_selection.groupby('date').first(
     ).reset_index()
     combined = photos_selection.merge(
@@ -229,8 +231,8 @@ def update_slider_options(selected_chat_title):
     marks = {value:
              {'label': date,
               'style':
-              {"transform": "rotate(90deg)", 'margin-left': '-35px', 'margin-bottom': '20px', 'margin-top': '50px'}}
-
+              {"transform": "rotate(90deg)", 'float': 'left', 'margin-left': '-35px', 'margin-top': '20px'}}
+             #   {'fontSize': 8, 'writing-mode': 'vertical-rl', 'text-orientation': 'mixed', 'margin-left': '-35px', 'margin-bottom': '20px', 'margin-top': '50px'}}
              for value, date in zip(idx_of_first_daily_msg, date_of_first_daily_msg)
              }
 
