@@ -7,6 +7,30 @@ from helpers import *
 from network import plot_graph
 
 
+def get_layout(total_sent, total_received, first_message_date, last_message_date):
+
+    layout = html.Div(children=[
+        html.H1(children='Facebook Messages'),
+
+        html.Div(children=f'''
+            Exploring {total_sent} messages sent and {total_received} received between {first_message_date} and {last_message_date}
+        '''),
+
+        dcc.Tabs(children=[
+            dcc.Tab(label='Personal Stats', value="1"),
+            dcc.Tab(label='Chat Analysis', value="2"),
+            dcc.Tab(label='Contact Info', value="3"),
+            dcc.Tab(label='Network Graph', value="4"),
+            dcc.Tab(label='Photo Viewer', value="5"),
+        ],
+            value="1",
+            id='tabs'
+        ),
+        html.Div(id='tab-output')
+    ])
+    return layout
+
+
 def get_tab1(weekly_pattern, contact_counts):
 
     tab1 = [

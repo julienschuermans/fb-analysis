@@ -14,7 +14,7 @@ pip install -r requirements.txt
 ## Run the app
 
 ```bash
-python app.py
+python index.py
 ```
 
 The Plotly Dash webserver will load at [http://127.0.0.1:8050](http://127.0.0.1:8050).

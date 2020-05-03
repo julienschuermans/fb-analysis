@@ -9,13 +9,6 @@ import nltk
 from nltk import sent_tokenize, word_tokenize, PorterStemmer
 from nltk.corpus import stopwords
 
-# from nltk.stem import WordNetLemmatizer
-# from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-# import networkx as nx
-# import community
-# import matplotlib.pyplot as plt
-
 from collections import Counter
 from pandas.api.types import CategoricalDtype
 
@@ -24,9 +17,6 @@ from helpers import *
 
 words_to_ignore = set(stopwords.words('english')).union(
     stopwords.words('dutch')).union(BORING_WORDS).union(set([x for x in string.digits + string.punctuation + string.whitespace + string.hexdigits + string.octdigits]))
-
-# sentiment_analyzer = SentimentIntensityAnalyzer()
-# wordnet_lemmatizer = WordNetLemmatizer()
 
 # Global analysis
 
