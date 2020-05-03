@@ -241,11 +241,11 @@ def update_slider_options(selected_chat_title):
 
 @app.callback(
     [Output('img-container', 'children'),
-     Output('img-details', 'children')],
+     Output('img-details', 'children'),
+     Output('img-date', 'children'),
+     Output('img-count', 'children')],
     [Input('chat-dropdown-media', 'value'),
      Input('my-slider', 'value')]
-
-
 )
 def update_image(selected_chat_title, slider_value):
 
@@ -255,18 +255,20 @@ def update_image(selected_chat_title, slider_value):
 
     photos = html.Img(src='data:image/jpg;base64,{}'.format(read_image(list_of_filenames[int(slider_value)]).decode()),
                       style={
-        'height': '40%',
-        'width': '40%',
-        'float': 'left',
-        'margin-bottom': '20px'
+        'width': '500px',
+        'margin-left': 'auto',
+        'margin-right': 'auto',
+        'margin-bottom': '20px',
+        'display': 'block'
     }
     )
 
-    text = str(slider_value + 1) + '/' + str(len(list_of_filenames)) + '\n' + photos_selection.iloc[slider_value].sender_name + '  [' + \
-        photos_selection.timestamp.dt.strftime(
-            '%d-%m-%Y %H:%M').iloc[slider_value] + ']'
+    text = photos_selection.iloc[slider_value].sender_name
 
-    return photos, text
+    date = photos_selection.timestamp.dt.strftime(
+        '%d-%m-%Y %H:%M').iloc[slider_value]
+
+    return photos, text, date, str(len(list_of_filenames)) + ' photos sent/received'
 
 
 if __name__ == '__main__':

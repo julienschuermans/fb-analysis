@@ -145,7 +145,7 @@ def get_tab5(df_photos):
                      value=list_chat_titles(df_photos)[0]
                      ),
 
-        html.H4('Photos sent/received'),
+        html.H4(id='img-count'),
 
         html.Div(children=[
             dcc.Slider(
@@ -155,12 +155,23 @@ def get_tab5(df_photos):
             ),
         ],
             style={
-            'margin-bottom': '120px',
-            'margin-right': '100px',
+            'margin-bottom': '80px',
+            'margin-right': '20px',
+            'margin-left': '20px',
         }
         ),
 
-        html.H4(id='img-details'),
+        html.H4(id='img-details',
+                style={
+                    'text-align': 'center',
+                    'vertical-align': 'middle',
+                }),
+        html.H5(id='img-date',
+                style={
+                    'margin-bottom': '20px',
+                    'text-align': 'center',
+                    'vertical-align': 'middle',
+                }),
         html.Div(id='img-container'),
     ]
 
