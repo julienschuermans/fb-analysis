@@ -6,6 +6,10 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 
 from app import app
+
+from apps.template import layout as example_layout
+from apps.template import callbacks as example_callbacks
+
 from apps.messages import layout as msg_layout
 from apps.messages import callbacks as msg_callbacks
 
@@ -33,12 +37,17 @@ app.layout = html.Div([
         html.Div(children=[
             dcc.Link('Home', href='/'),
         ],
-            style={'width': '5%', 'display': 'inline-block'}
+            style={'width': '15%', 'display': 'inline-block'}
         ),
         html.Div(children=[
             dcc.Link('Messages', href='/messages'),
         ],
-            style={'width': '5%', 'display': 'inline-block'}
+            style={'width': '15%', 'display': 'inline-block'}
+        ),
+        html.Div(children=[
+            dcc.Link('Example', href='/example'),
+        ],
+            style={'width': '15%', 'display': 'inline-block'}
         )
     ],
         style={
@@ -50,6 +59,7 @@ app.layout = html.Div([
 ])
 
 # Register callbacks for separate apps
+example_callbacks.register_callbacks(app)
 msg_callbacks.register_callbacks(
     app, df, df_photos, G)
 
@@ -61,6 +71,8 @@ def display_page(pathname):
         return html.Div(html.H1('This is the homepage. Nothing to see here.'))
     elif pathname == '/messages':
         return msg_layout.get_layout(df)
+    elif pathname == '/example':
+        return example_layout.get_layout()
     else:
         return html.Div(html.H1('404'))
 

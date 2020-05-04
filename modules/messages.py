@@ -47,23 +47,25 @@ def get_msg_count_in_out(df, granularity):
         r = received.groupby(pd.Grouper(key='timestamp', freq='H')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
 
-    if granularity == 'Daily':
+    elif granularity == 'Daily':
         s = sent.groupby(pd.Grouper(key='timestamp', freq='D')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
         r = received.groupby(pd.Grouper(key='timestamp', freq='D')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
 
-    if granularity == 'Monthly':
+    elif granularity == 'Monthly':
         s = sent.groupby(pd.Grouper(key='timestamp', freq='MS')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
         r = received.groupby(pd.Grouper(key='timestamp', freq='MS')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
 
-    if granularity == 'Yearly':
+    elif granularity == 'Yearly':
         s = sent.groupby(pd.Grouper(key='timestamp', freq='YS')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
         r = received.groupby(pd.Grouper(key='timestamp', freq='YS')).size(
         ).reset_index().rename(columns={0: 'msg_count'})
+    else:
+        raise NotImplementedError()
 
     s['type'] = 'sent'
     r['type'] = 'received'
