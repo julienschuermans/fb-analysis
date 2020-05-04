@@ -1,27 +1,42 @@
 import string
 import time
+import os
 import logging
-
 import numpy as np
 import math
+from collections import Counter
 
 import nltk
 from nltk import sent_tokenize, word_tokenize, PorterStemmer
 from nltk.corpus import stopwords
 
-from collections import Counter
+import pandas as pd
 from pandas.api.types import CategoricalDtype
 
-from config import BORING_WORDS
-from helpers import *
+from config import BORING_WORDS, MY_NAME, MSG_DIR
 
 words_to_ignore = set(stopwords.words('english')).union(
     stopwords.words('dutch')).union(BORING_WORDS).union(set([x for x in string.digits + string.punctuation + string.whitespace + string.hexdigits + string.octdigits]))
 
+
+# basic stuff
+
+def list_chat_titles(df):
+    return sorted(df.title.unique().tolist())
+
+
+def list_contacts(df):
+    return sorted(df.sender_name.unique().tolist())
+
+
+def filter_df_on_title(df, chat_title):
+    return df.loc[df.title == chat_title]
+
+
 # Global analysis
 
 
-def calc_sent_received(df, granularity):
+def get_msg_count_in_out(df, granularity):
 
     sent = df.loc[df.sender_name == MY_NAME]
     received = df.loc[df.sender_name != MY_NAME]
@@ -58,7 +73,7 @@ def calc_sent_received(df, granularity):
     return results
 
 
-def calc_activity_pattern(df):
+def get_weekly_activity_pattern(df):
     selected = df.loc[df.sender_name == MY_NAME]
 
     days = ['Monday', 'Tuesday', 'Wednesday',
@@ -75,7 +90,7 @@ def calc_activity_pattern(df):
     return result
 
 
-def count_msg_per_contact(df):
+def get_total_msg_count_per_contact(df):
     """Returns the number of messages sent by every contact"""
 
     result = df.groupby('sender_name').size().reset_index().rename(
@@ -88,10 +103,10 @@ def count_msg_per_contact(df):
                 theirs=(others.sender_name.tolist(), others.msg_count.tolist())
                 )
 
-# chat analysis
 
+# Analysis per chat
 
-def calc_aggregates(df, granularity):
+def get_msg_count_per_contact(df, granularity):
     """ Returns the number of messages sent per user within a predefined interval """
 
     if granularity == 'Hourly':
@@ -106,7 +121,7 @@ def calc_aggregates(df, granularity):
         raise NotImplementedError
 
 
-def calc_distribution(df, timeframe):
+def get_msg_distribution_per_contact(df, timeframe):
     """Returns the total nb of messages sent per day of the week, or per hour of the day"""
 
     if timeframe == 'Day of Week':
@@ -127,7 +142,7 @@ def calc_distribution(df, timeframe):
         raise NotImplementedError
 
 
-def wordcount(df):
+def get_wordcount(df):
     "returns the word count of all messages in this df, sorted by descending frequency"
 
     results = Counter()
@@ -143,11 +158,11 @@ def wordcount(df):
 # Contact analysis
 
 
-def tokenize_all_content(df):
+def _tokenize_all_content(df):
     return list(set(nltk.word_tokenize(' '.join(df['content'].str.lower().dropna().values.tolist()))).difference(words_to_ignore))
 
 
-def avg_words_per_message(df):
+def _avg_words_per_message(df):
     return np.mean([len(x) for x in df['content'].str.lower().dropna().apply(nltk.word_tokenize).values.tolist()])
 
 
@@ -158,23 +173,18 @@ def get_contact_stats(df, selected_contacts):
     stats = grouper.size().reset_index().rename(
         columns={'sender_name': 'Name', 0: 'Message Count'})
 
-    if selected_contacts:
-        tokenized = grouper.apply(tokenize_all_content)
+    tokenized = grouper.apply(_tokenize_all_content)
 
-        stats['Vocab. size'] = tokenized.apply(set).apply(len).values
-        stats['Avg. word length'] = tokenized.apply(
-            lambda sender_words: np.mean([len(word) for word in sender_words])).values
-        stats['Avg. words per msg'] = grouper.apply(
-            avg_words_per_message).values
-    else:
-        stats['Vocab. size'] = np.nan
-        stats['Avg. word length'] = np.nan
-        stats['Avg. words per msg'] = np.nan
+    stats['Vocab. size'] = tokenized.apply(set).apply(len).values
+    stats['Avg. word length'] = tokenized.apply(
+        lambda words: np.mean([len(word) for word in words])).values
+    stats['Avg. words per msg'] = grouper.apply(
+        _avg_words_per_message).values
 
     return stats
 
 
-def connection_matrix(df):
+def get_weighted_adjacency_matrix(df):
 
     msgs_per_sender_per_title = df.groupby(['sender_name', 'title']).size(
     ).reset_index().rename(columns={0: 'msg_count'})

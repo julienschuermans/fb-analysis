@@ -1,7 +1,5 @@
 import time
-from helpers import *
-from messages import *
-from network import build_graph
+import logging
 
 import dash_core_components as dcc
 import dash_html_components as html
@@ -11,6 +9,11 @@ from app import app
 from apps.messages import layout as msg_layout
 from apps.messages import callbacks as msg_callbacks
 
+from modules.dataloader import load_data
+from modules.messages import *
+from modules.network import build_graph
+
+from config import MY_NAME
 
 # Dataload Messages
 df, df_photos = load_data()
@@ -19,15 +22,8 @@ assert MY_NAME in df.sender_name.unique().tolist(),\
 
 # Preprocessing Messages
 t0 = time.time()
-all_contacts = sorted(df.sender_name.unique().tolist())
-contact_counts = count_msg_per_contact(df)
-total_sent = len(df.loc[df.sender_name == MY_NAME])
-total_received = len(df.loc[df.sender_name != MY_NAME])
-first_message_date = df.timestamp.min().strftime('%d-%m-%Y')
-last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
-weekly_pattern = calc_activity_pattern(df)
-names, connectivity = connection_matrix(df)
-G = build_graph(connectivity, names)
+names, adjacency = get_weighted_adjacency_matrix(df)
+G = build_graph(adjacency, names)
 logging.info(f'Preprocessing took {time.time()-t0:.4f} seconds.')
 
 # Page Layout
@@ -55,7 +51,7 @@ app.layout = html.Div([
 
 # Register callbacks for separate apps
 msg_callbacks.register_callbacks(
-    app, df, df_photos, weekly_pattern, contact_counts, all_contacts, G)
+    app, df, df_photos, G)
 
 # Callbacks that render the page content based on the current path
 @app.callback(Output('page-content', 'children'),
@@ -64,7 +60,7 @@ def display_page(pathname):
     if pathname == '/':
         return html.Div(html.H1('This is the homepage. Nothing to see here.'))
     elif pathname == '/messages':
-        return msg_layout.get_layout(total_sent, total_received, first_message_date, last_message_date)
+        return msg_layout.get_layout(df)
     else:
         return html.Div(html.H1('404'))
 
