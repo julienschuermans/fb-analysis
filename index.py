@@ -20,7 +20,10 @@ from modules.network import build_graph
 from config import MY_NAME
 
 # Dataload Messages
+t0 = time.time()
 df, df_photos = load_data()
+logging.info(f'Loading all data took {time.time()-t0:.4f} seconds.')
+
 assert MY_NAME in df.sender_name.unique().tolist(),\
     f"Name \"{MY_NAME}\" (in config.py) is not a valid sender_name, is your name \"{df.sender_name.mode().values[0]}\"?"
 

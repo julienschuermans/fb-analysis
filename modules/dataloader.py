@@ -3,7 +3,6 @@ import copy
 import json
 import pandas as pd
 import logging
-import time
 import datetime
 import base64
 
@@ -29,7 +28,6 @@ def _list_chat_ids():
 # dataload
 
 def load_data():
-    t0 = time.time()
     text_msgs = []
     photo_msgs = []
 
@@ -69,7 +67,6 @@ def load_data():
     df_photos['photo_creation_timestamp'] = pd.to_datetime(
         df_photos['photo_creation_timestamp'], unit='ms')
 
-    logging.info(f'Loading all data took {time.time()-t0:.4f} seconds.')
     return df, df_photos
 
 
