@@ -1,19 +1,26 @@
-import plotly.express as px
 import logging
+
+import plotly.express as px
 import dash_core_components as dcc
 import dash_html_components as html
 
-from helpers import *
-from network import plot_graph
+from modules.network import plot_graph
+from modules.messages import *
+
+from config import MY_NAME
 
 
-def get_layout(total_sent, total_received, first_message_date, last_message_date):
+def get_layout(df):
+    total_sent = len(df.loc[df.sender_name == MY_NAME])
+    total_received = len(df.loc[df.sender_name != MY_NAME])
+    first_message_date = df.timestamp.min().strftime('%d-%m-%Y')
+    last_message_date = df.timestamp.max().strftime('%d-%m-%Y')
 
     layout = html.Div(children=[
         html.H1(children='Facebook Messages'),
 
         html.Div(children=f'''
-            Exploring {total_sent} messages sent and {total_received} received between {first_message_date} and {last_message_date}
+            Explore {total_sent} messages sent and {total_received} received between {first_message_date} and {last_message_date}
         '''),
 
         dcc.Tabs(children=[
@@ -31,7 +38,10 @@ def get_layout(total_sent, total_received, first_message_date, last_message_date
     return layout
 
 
-def get_tab1(weekly_pattern, contact_counts):
+def get_tab1(df):
+
+    contact_counts = get_total_msg_count_per_contact(df)
+    weekly_pattern = get_weekly_activity_pattern(df)
 
     tab1 = [
         html.H4('#Messages sent/received'),
@@ -123,15 +133,17 @@ def get_tab2(df):
     return tab2
 
 
-def get_tab3(contacts):
+def get_tab3(df):
+    all_contacts = list_contacts(df)
+
     tab3 = [
 
         html.H4('Stats per contact'),
         html.Label('Select one or more contacts'),
         dcc.Dropdown(id='contact-select-dropdown',
                      options=[
-                        {'label': contact, 'value': contact} for contact in contacts],
-                     value=contacts[:5],
+                        {'label': contact, 'value': contact} for contact in all_contacts],
+                     value=all_contacts[:5],
                      multi=True
                      ),
 
@@ -146,7 +158,6 @@ def get_tab4(G):
     tab4 = [
         html.H4('Network Interactions'),
         dcc.Graph(
-            id='network graph',
             figure=fig,
         ),
     ]
@@ -155,7 +166,8 @@ def get_tab4(G):
 
 def get_tab5(df_photos):
 
-    photos_selection = filter_chat(df_photos,  list_chat_titles(df_photos)[0])
+    photos_selection = filter_df_on_title(
+        df_photos,  list_chat_titles(df_photos)[0])
 
     photos_selection = photos_selection.sort_values('timestamp')
     list_of_filenames = photos_selection.photo_uri.tolist()
@@ -186,19 +198,20 @@ def get_tab5(df_photos):
                     'text-align': 'center',
                     'vertical-align': 'middle',
                 }),
-        html.Div(children=[
-                 dcc.Slider(
-                     id='my-slider',
-                     min=0,
-                     step=1
-                 ),
-                 ],
-                 style={
-            'margin-bottom': '50px',
-                 'margin-right': '20px',
-                 'margin-left': '20px',
-                 }
-                 ),
+        html.Div(
+            children=[
+                dcc.Slider(
+                    id='my-slider',
+                    min=0,
+                    step=1
+                ),
+            ],
+            style={
+                'margin-bottom': '50px',
+                'margin-right': '20px',
+                'margin-left': '20px',
+            }
+        ),
     ]
 
     return tab5
