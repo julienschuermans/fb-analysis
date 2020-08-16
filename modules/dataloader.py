@@ -22,7 +22,7 @@ def _get_path_to_chat_json(chat_id):
 
 
 def _list_chat_ids():
-    return sorted(os.listdir(MSG_DIR))
+    return [filename for filename in sorted(os.listdir(MSG_DIR)) if not filename == '.DS_Store']
 
 
 # dataload
