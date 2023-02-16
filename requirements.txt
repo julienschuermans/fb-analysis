@@ -37,5 +37,5 @@ tqdm==4.45.0
 Unidecode==1.1.1
 urllib3==1.25.9
 vaderSentiment==3.3.1
-Werkzeug==1.0.1
+Werkzeug==2.2.3
 wn==0.0.23
